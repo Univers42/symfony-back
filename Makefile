@@ -37,48 +37,51 @@ SYMFONY     := $(DC_TOOLS) run --rm --entrypoint symfony symfony
 SF_INIT     := $(DC_TOOLS) run --rm --entrypoint init-symfony symfony
 
 .DEFAULT_GOAL := help
-.PHONY: help all dev dev-full setup build up up-fast down restart logs ps init shell shell-php shell-postgres shell-mongo psql mongo-shell \
+.PHONY: help all dev dev-full setup build up up-fast up-app down restart logs ps init shell shell-php shell-postgres shell-mongo psql mongo-shell \
         composer symfony cache-clear migrate db-create db-drop db-reset db-seed test clean prune reset \
         models-validate models-generate models-pipeline jwt-keys fix-perms doctor \
         urls status open wait wait-http wait-db wait-mongo
 
 # -- Help -------------------------------------------------------------------
 help:
-	@echo.
-	@echo   Symfony Backend Stack -- targets
-	@echo   --------------------------------
-	@echo   make all          One-shot: setup + build + up + init  (recommended first run)
-	@echo   make setup        Create .env, ./app, ./secrets
-	@echo   make build        Build all images in parallel
-	@echo   make up           Start the stack
-	@echo   make init         Bootstrap Symfony project + first page (requires stack up)
-	@echo   make down         Stop the stack
-	@echo   make restart      Restart
-	@echo   make logs         Tail logs
-	@echo   make ps           List services
-	@echo   make status       Services + URLs
-	@echo   make shell-php       Shell into php container
-	@echo   make psql            psql shell into Postgres
-	@echo   make mongo-shell     mongosh into MongoDB (app db)
-	@echo   make composer ARGS=...  Run composer
-	@echo   make symfony  ARGS=...  Run symfony CLI
-	@echo   make models-validate  Validate every YAML model under ./models
-	@echo   make models-generate  Generate Doctrine entities + ODM documents from ./models
-	@echo   make models-pipeline  models-generate + migrate + db-seed
-	@echo   make jwt-keys         Generate Lexik JWT keypair (idempotent)
-	@echo   make cache-clear / db-create / db-drop / migrate / db-seed / db-reset / test
-	@echo   make clean        Remove containers (keep volumes)
-	@echo   make prune        Remove containers + volumes (DESTROYS DATA)
-	@echo   make reset        prune + build + up + init
-	@echo.
+	@echo ""
+	@echo "  Symfony Backend Stack -- targets"
+	@echo "  --------------------------------"
+	@echo "  make all          One-shot: setup + build + up + init  (recommended first run)"
+	@echo "  make dev          Fast bring-up (no build/recreate) for everyday work"
+	@echo "  make dev-full     Full bring-up: build + init + jwt-keys + models-pipeline"
+	@echo "  make doctor       Verify the Docker daemon is reachable"
+	@echo "  make setup        Create .env, ./app, ./secrets"
+	@echo "  make build        Build all images in parallel"
+	@echo "  make up           Start the stack"
+	@echo "  make init         Bootstrap Symfony project + first page (requires stack up)"
+	@echo "  make down         Stop the stack"
+	@echo "  make restart      Restart"
+	@echo "  make logs         Tail logs"
+	@echo "  make ps           List services"
+	@echo "  make status       Services + URLs"
+	@echo "  make shell-php       Shell into php container"
+	@echo "  make psql            psql shell into Postgres"
+	@echo "  make mongo-shell     mongosh into MongoDB (app db)"
+	@echo "  make composer ARGS=...  Run composer"
+	@echo "  make symfony  ARGS=...  Run symfony CLI"
+	@echo "  make models-validate  Validate every YAML model under ./models"
+	@echo "  make models-generate  Generate Doctrine entities + ODM documents from ./models"
+	@echo "  make models-pipeline  models-generate + migrate + db-seed"
+	@echo "  make jwt-keys         Generate Lexik JWT keypair (idempotent)"
+	@echo "  make cache-clear / db-create / db-drop / migrate / db-seed / db-reset / test"
+	@echo "  make clean        Remove containers (keep volumes)"
+	@echo "  make prune        Remove containers + volumes (DESTROYS DATA)"
+	@echo "  make reset        prune + build + up + init"
+	@echo ""
 
 # -- One-shot ---------------------------------------------------------------
 all: setup build init up status
 
 # -- Dev one-shot: fast path (no build, no recreate). Use `make dev-full` to rebuild.
-dev: setup doctor up-fast wait-db wait-mongo fix-perms wait-http status
-	@echo.
-	@echo Stack ready -- open http://localhost:$${HTTP_HOST_PORT:-8080}
+dev: setup doctor up-fast wait-db wait-mongo up-app fix-perms wait-http status
+	@echo ""
+	@echo "Stack ready -- open http://localhost:$${HTTP_HOST_PORT:-8080}"
 
 # Sanity check: can we actually reach the Docker daemon?
 # Inside WSL we expect docker.exe (Docker Desktop interop). If it fails we print
@@ -101,9 +104,9 @@ endif
 	@echo "Docker OK"
 
 # -- Full bring-up including build + bootstrap (use after Dockerfile/composer changes)
-dev-full: setup doctor build up wait-db wait-mongo init jwt-keys models-pipeline fix-perms wait-http status
-	@echo.
-	@echo Stack ready -- open http://localhost:$${HTTP_HOST_PORT:-8080}
+dev-full: setup doctor build up-fast wait-db wait-mongo up-app init jwt-keys models-pipeline fix-perms wait-http status
+	@echo ""
+	@echo "Stack ready -- open http://localhost:$${HTTP_HOST_PORT:-8080}"
 
 # Fix var/ ownership so PHP-FPM (www-data) can write hydrators/cache/log.
 fix-perms:
@@ -121,7 +124,18 @@ up:
 	$(DC) up -d
 
 # Idempotent up: don't recreate containers whose config hasn't changed.
+# Bring up data services first WITHOUT their dependents, so the compose-level
+# `depends_on: condition: service_healthy` gate doesn't time out under load.
+# Our own wait-db / wait-mongo targets will then poll for health, and the
+# subsequent `up` brings the rest of the stack online.
 up-fast:
+	@$(DC) up -d --no-recreate --no-deps postgres mongo || ( \
+	  echo "==> initial up-fast failed, waiting 15s and retrying..." && \
+	  sleep 15 && \
+	  $(DC) up -d --no-recreate --no-deps postgres mongo )
+
+# Bring the rest of the stack up after data services are healthy.
+up-app:
 	$(DC) up -d --no-recreate
 
 down:
@@ -138,9 +152,9 @@ ps:
 status: ps urls
 
 urls open:
-	@echo App:      http://localhost:$${HTTP_HOST_PORT:-8080}
-	@echo Postgres: 127.0.0.1:$${POSTGRES_HOST_PORT:-5432}
-	@echo Mongo:    127.0.0.1:$${MONGO_HOST_PORT:-27017}
+	@echo "App:      http://localhost:$${HTTP_HOST_PORT:-8080}"
+	@echo "Postgres: 127.0.0.1:$${POSTGRES_HOST_PORT:-5432}"
+	@echo "Mongo:    127.0.0.1:$${MONGO_HOST_PORT:-27017}"
 
 # -- Readiness probes -------------------------------------------------------
 wait-db:
@@ -164,7 +178,9 @@ wait-http:
 ifeq ($(OS),Windows_NT)
 	@$(PWSH) -Command "for ($$i=0; $$i -lt 60; $$i++) { try { $$r = Invoke-WebRequest -UseBasicParsing -Uri 'http://localhost:8080/' -TimeoutSec 15; if ($$r.StatusCode -eq 200) { Write-Host ('HTTP 200 OK ({0} bytes)' -f $$r.RawContentLength); exit 0 } } catch {}; Start-Sleep -Seconds 3 }; Write-Host 'HTTP not ready'; exit 1"
 else
-	@for i in $$(seq 1 60); do code=$$(curl -s -m 15 -o /dev/null -w '%{http_code}' http://localhost:$${HTTP_HOST_PORT:-8080}/ || true); if [ "$$code" = "200" ]; then echo "HTTP 200 OK"; exit 0; fi; sleep 3; done; echo "HTTP not ready"; exit 1
+	@# Inside WSL the Windows host loopback is unreachable, so probe Apache from
+	@# inside its own container. Works on native Linux/macOS too.
+	@for i in $$(seq 1 60); do code=$$($(DC) exec -T apache curl -s -m 15 -o /dev/null -w '%{http_code}' http://127.0.0.1/ 2>/dev/null || true); if [ "$$code" = "200" ] || [ "$$code" = "302" ]; then echo "HTTP $$code OK (in-container)"; exit 0; fi; sleep 3; done; echo "HTTP not ready (last: $$code)"; exit 1
 endif
 
 # -- Symfony bootstrap ------------------------------------------------------

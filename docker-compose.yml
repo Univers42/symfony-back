@@ -63,6 +63,14 @@ services:
       - "27017"
     ports:
       - "127.0.0.1:${MONGO_HOST_PORT:-27017}:27017"
+    # Override the image HEALTHCHECK with a more lenient one. mongosh start-up
+    # on a Windows bind-mounted volume can occasionally exceed 5s.
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep -q 1"]
+      interval: 15s
+      timeout: 30s
+      start_period: 120s
+      retries: 20
 
   # ---------------------------------------------------------------------------
   # PHP-FPM 8.3 — runs the Symfony BaaS application
