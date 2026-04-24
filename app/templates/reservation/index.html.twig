@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Réservation – Le Quai Antique{% endblock %}
+
+{% block body %}
+<style>
+  body { margin:0; font-family: system-ui, sans-serif; background:#0f172a; color:#e2e8f0; min-height:100vh; }
+  header { padding:2rem; background:#1e293b; }
+  header h1 { margin:0; color:#fbbf24; }
+  main { padding:2rem; max-width:720px; margin:0 auto; }
+  form { background:#1e293b; padding:2rem; border-radius:1rem; display:grid; gap:1rem; }
+  label { display:block; font-weight:600; margin-bottom:.3rem; color:#94a3b8; }
+  input, select { width:100%; padding:.6rem; border-radius:.4rem; border:1px solid #334155; background:#0f172a; color:#e2e8f0; box-sizing:border-box; }
+  button { padding:.8rem 1.2rem; border:none; border-radius:.4rem; background:#38bdf8; color:#0f172a; font-weight:700; cursor:pointer; }
+  .slots { display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:.6rem; margin-top:1.5rem; }
+  .slot { padding:.7rem; border-radius:.5rem; text-align:center; font-weight:600; }
+  .slot.available { background:#065f46; color:#d1fae5; cursor:pointer; }
+  .slot.unavailable { background:#7f1d1d; color:#fee2e2; opacity:.6; }
+  .slot small { display:block; font-weight:400; opacity:.8; }
+  .msg { color:#fbbf24; margin-top:1rem; }
+  nav a { color:#38bdf8; margin-right:1rem; text-decoration:none; }
+</style>
+<header>
+  <nav>
+    <a href="/">Accueil</a>
+    <a href="/reservation">Réserver</a>
+  </nav>
+  <h1>Réserver une table — Le Quai Antique</h1>
+</header>
+<main>
+  <form data-controller="reservation"
+        data-action="change->reservation#fetch"
+        data-reservation-endpoint-value="/api/reservations/availability">
+    <div>
+      <label for="date">Date</label>
+      <input type="date" id="date" name="date" data-reservation-target="date" required>
+    </div>
+    <div>
+      <label for="guests">Nombre de convives</label>
+      <input type="number" id="guests" name="guests" min="1" max="20" value="2" data-reservation-target="guests" required>
+    </div>
+    <div>
+      <label for="service">Service</label>
+      <select id="service" name="service" data-reservation-target="service" required>
+        <option value="lunch">Déjeuner</option>
+        <option value="dinner">Dîner</option>
+      </select>
+    </div>
+    <button type="button" data-action="click->reservation#fetch">Vérifier les disponibilités</button>
+    <div class="msg" data-reservation-target="message"></div>
+    <div class="slots" data-reservation-target="slots"></div>
+  </form>
+</main>
+{% endblock %}

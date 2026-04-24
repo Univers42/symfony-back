@@ -1,0 +1,73 @@
+# =============================================================================
+# Model meta-schema for the BaaS code generator.
+# Each *.yaml file under /models (any nested dir) defines exactly ONE resource.
+# Files starting with `_` (like this one) are ignored by the loader.
+# =============================================================================
+
+# --- Required top-level keys ------------------------------------------------
+#
+# name        : PascalCase PHP class name (Restaurant, GalleryImage)
+# table       : snake_case relational table OR mongo collection name
+# store       : "postgres" or "mongo"
+# fields      : list of field definitions  (see "field" section below)
+#
+# --- Optional top-level keys ------------------------------------------------
+#
+# description : free text used as PHPDoc summary
+# api         : API exposure config (see "api" section)
+# relations   : relational associations (postgres only — see "relation")
+# indexes     : database indexes (see "index")
+# seeds       : fixture generation hints (see "seed")
+# track_changes: bool, when true mutations are written to the audit_log
+#
+# --- field ------------------------------------------------------------------
+# Required: name, type
+# Optional: length, nullable (default false), unique (default false),
+#           default (literal | "now" | "uuid"),
+#           groups (list of serialization groups; default [<name>:read,<name>:write]),
+#           assert (list of validator attributes by short name)
+#
+# Supported `type` values:
+#   id                        — auto-increment primary key (INT for postgres,
+#                               ObjectId for mongo). Always exactly one per model.
+#   int, bigint, smallint
+#   float, decimal
+#   bool
+#   string                    — VARCHAR (length defaults to 255)
+#   text
+#   json
+#   datetime_immutable
+#   date
+#   time
+#   uuid
+#   email                     — string with Email assert
+#   url                       — string with Url assert
+#
+# --- relation (postgres only) ----------------------------------------------
+# Required: name, type, target
+#   type: many_to_one | one_to_many | many_to_many | one_to_one
+#   target: PascalCase model name from another model file
+# Optional: nullable, mapped_by (for inverse side), inversed_by, cascade,
+#           on_delete (CASCADE|SET_NULL|RESTRICT), order_by ({field: ASC|DESC}).
+#
+# --- index ------------------------------------------------------------------
+# Postgres:  { name: idx_xxx, columns: [col1, col2], unique: false }
+# Mongo:     { fields: { col1: 1, col2: -1 }, unique: false, sparse: false }
+#
+# --- api --------------------------------------------------------------------
+# enabled: bool                 — default true for postgres, false for mongo
+# operations: list              — subset of [GetCollection, Get, Post, Put, Patch, Delete]
+# security_per_op: { Op: "ROLE_X" }  — Symfony security expression per op
+# normalization_groups, denormalization_groups: [list]
+# pagination_items_per_page: int (default 30)
+#
+# --- seeds ------------------------------------------------------------------
+# count: int                    — number of random fixtures to generate
+# fixed: [list of literal payloads]   — always inserted verbatim (idempotent by id/email)
+# generators: { fieldName: spec } — overrides random generator (faker.<method> | random.<set>)
+# =============================================================================
+
+meta:
+  schema_version: 1
+  generator:     "App\\Baas\\Generator"
+  marker:        "@generated baas-codegen"

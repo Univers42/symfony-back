@@ -1,0 +1,26 @@
+name: Restaurant
+table: restaurants
+store: postgres
+description: |
+  Single restaurant configuration row (the CDC describes one establishment).
+  Capacity feeds the reservation availability check.
+
+fields:
+  - { name: id, type: id }
+  - { name: name, type: string, length: 120, assert: [NotBlank] }
+  - { name: city, type: string, length: 80, assert: [NotBlank] }
+  - { name: address, type: string, length: 200, nullable: true }
+  - { name: phone, type: string, length: 30, nullable: true }
+  - { name: capacity, type: int, default: 40, assert: [Positive] }
+  - { name: serviceDurationMinutes, type: smallint, default: 120 }
+  - { name: createdAt, type: datetime_immutable, default: now }
+
+api:
+  operations:
+    - GetCollection
+    - Get
+    - Post
+    - Patch
+  pagination_items_per_page: 10
+  normalization_groups: [restaurant:read]
+  denormalization_groups: [restaurant:write]

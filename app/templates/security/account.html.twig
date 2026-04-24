@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Account{% endblock %}
+
+{% block body %}
+<main style="max-width:640px;margin:3rem auto;font-family:system-ui,sans-serif">
+    <h1>Account</h1>
+    <p>Email: <strong>{{ user.email }}</strong></p>
+    <p>Roles: <code>{{ user.roles|join(', ') }}</code></p>
+    <p><a href="{{ path('app_logout') }}">Sign out</a></p>
+</main>
+{% endblock %}

@@ -1,0 +1,71 @@
+security:
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    role_hierarchy:
+        ROLE_CLIENT: ROLE_USER
+        ROLE_ADMIN:  [ROLE_CLIENT, ROLE_ALLOWED_TO_SWITCH]
+
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    firewalls:
+        dev:
+            pattern: ^/(_profiler|_wdt|assets|build)/
+            security: false
+
+        login:
+            pattern: ^/api/login$
+            stateless: true
+            provider: app_user_provider
+            json_login:
+                check_path: /api/login
+                username_path: email
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+
+        api:
+            pattern: ^/api(/|$)
+            stateless: true
+            provider: app_user_provider
+            jwt: ~
+
+        main:
+            lazy: true
+            provider: app_user_provider
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                enable_csrf: true
+            logout:
+                path: app_logout
+                target: app_home
+
+    access_control:
+        - { path: ^/api/docs,        roles: PUBLIC_ACCESS }
+        - { path: ^/api/login,       roles: PUBLIC_ACCESS }
+        - { path: ^/api/register,    roles: PUBLIC_ACCESS }
+        - { path: ^/login,           roles: PUBLIC_ACCESS }
+        - { path: ^/register,        roles: PUBLIC_ACCESS }
+        - { path: ^/api/mongo/gallery_images, methods: [GET], roles: PUBLIC_ACCESS }
+        - { path: ^/api/restaurants, methods: [GET],         roles: PUBLIC_ACCESS }
+        - { path: ^/api/menus,       methods: [GET],         roles: PUBLIC_ACCESS }
+        - { path: ^/api/dishes,      methods: [GET],         roles: PUBLIC_ACCESS }
+        - { path: ^/api/categories,  methods: [GET],         roles: PUBLIC_ACCESS }
+        - { path: ^/api/service_hours, methods: [GET],       roles: PUBLIC_ACCESS }
+        - { path: ^/api/reservations/availability, methods: [GET], roles: PUBLIC_ACCESS }
+        - { path: ^/admin,           roles: ROLE_ADMIN }
+        - { path: ^/api,             roles: IS_AUTHENTICATED_FULLY }
+
+when@test:
+    security:
+        password_hashers:
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4
+                time_cost: 3
+                memory_cost: 10

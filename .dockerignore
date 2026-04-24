@@ -1,0 +1,13 @@
+.git
+.gitignore
+.env
+.env.*
+secrets/
+app/var/
+app/vendor/
+app/node_modules/
+**/.DS_Store
+**/Thumbs.db
+**/.idea
+**/.vscode
+*.md

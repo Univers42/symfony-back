@@ -1,0 +1,118 @@
+CDC : LE PROJET Restaurant
+Contexte
+Le Chef Arnaud Michant aime passionnément les produits - et producteurs - de la
+Savoie.
+C’est pourquoi il a décidé d’ouvrir son troisième restaurant dans ce département.
+Le Quai Antique sera installé à Chambéry et proposera au déjeuner comme au dîner
+une expérience gastronomique, à travers une cuisine sans artifice.
+Plus encore que ses deux autres restaurants, Arnaud Michant le voit comme une
+promesse d’un voyage dans son univers culinaire.
+Lors de l’inauguration de son deuxième établissement, le chef Michant a pu constater
+L’impact positif que pouvait avoir un bon site web sur son chiffre d’affaires. C’est
+pourquoi il a fait appel à l’agence web dont vous faites partie.
+Dans le cadre de cette mission qui vous est affectée, vous aurez à créer une
+application web vitrine pour le Quai Antique avec ce goût de la qualité que recherche
+Arnaud Michant.
+
+Connexion
+Utilisateurs concernés: Administrateur, Clients
+Le compte administrateur sera créé pour un employé du restaurant en particulier:
+l’hôte d’accueil. Celui-ci sera renseigné directement en base de données. C’est lui qui
+gérera les informations sur le site web.
+Toutefois, un autre type de compte sera possible: le “client” (voir Inscription).
+Quel que soit le type d’utilisateur souhaitant se connecter, il pourra le faire grâce au
+même formulaire de connexion. Les identifiants à entrer seront l’adresse e-mail et un
+mot de passe sécurisé.
+
+Inscription.
+Utilisateurs concernés: Visiteurs, Clients
+Un visiteur peut créer un compte client.
+Quand le visiteur créera son compte, on lui proposera d’entrer un prénom, un nom, une
+adresse email, un mot de passe sécurisé, un nombre de convives par défaut ainsi que
+la mention des allergies.
+Dorénavant, si le visiteur se connecte avant de remplir le formulaire de réservation
+d’une table, le nombre de convives et les allergies seront remplis automatiquement
+avec les réglages du client.
+
+Définir les informations du restaurant.
+Utilisateurs concernés: Administrateur
+L’administrateur pourra définir les horaires d’ouvertures des services, et le nombre
+maximum de convives du restaurant.
+Chaque service du restaurant dure deux heures. On peut définir l’horaire d’ouverture
+du service du midi et du soir. Le restaurant ouvre du mardi au dimanche, les jours
+d’ouverture ne sont pas paramétrables.
+Nous devons pouvoir changer le nombre maximum de convives du restaurant.
+
+Créer une galerie d’images
+Utilisateurs concernés: Administrateur
+Le chef Michant aimerait afficher les photographies de ses plats les plus appréciés afin
+de donner l’eau à la bouche de ses potentiels convives.
+Toute photo devra pouvoir être ajoutée, modifiée ou supprimée sur la plateforme
+d’administration. Chaque photo aura aussi un titre. Il sera visible lors du survol de son
+image.
+Un bouton d’appel à l’action vers le module de réservation (Voir Réserver une table)
+devra être positionné juste après la galerie.
+
+Gérer les plats à la carte.
+Utilisateurs concernés: Administrateur
+L’administrateur doit pouvoir gérer la carte du restaurant. Ce sera uniquement une liste
+de plats, rangés par catégories (ex: Entrées, Desserts, etc).
+Il faudra donc que l'administrateur puisse créer ses catégories en amont.
+Elles auront simplement un titre.
+Les informations nécessaires pour chaque plat sont:
+- un titre
+- une description
+- un prix
+
+Gérer les menus.
+Utilisateurs concernés: Administrateur
+En plus des plats incontournables à proposer, le chef Michant voudrait des menus.
+Pour chaque menu, on aura:
+- un titre
+- une description étant la liste des choix possibles dans le menu
+
+- un prix
+
+Afficher la carte
+Utilisateurs concernés : Tous
+Il faudra afficher la carte complète, en mettant d’un côté les plats à la carte, et de
+l’autre les menus.
+
+Réserver une table.
+Utilisateurs concernés: Visiteurs, Clients
+L’utilisateur pourra remplir un formulaire pour réserver une table.
+Plusieurs champs seront nécessaires:
+- le nombre de couverts
+- la date prévue
+- l’heure prévue
+- la mention des allergies
+Le visiteur doit savoir si des places sont disponibles sans rechargement de la page.
+On pourra sélectionner un horaire par tranche de 15 minutes entre l’ouverture et la
+fermeture du restaurant.
+Exemple: si le restaurant ouvre de 12h à 14h, alors on aura :
+12h00 / 12h15 / 12h30 / 12h45 / 13h00 / 13h15 / 13h30 / 13h45 / 14h00
+Attention! Le restaurant est limité en nombre de convives.
+Pour éviter toute déconvenue sur place, il faudra refuser les réservations au-delà d’un
+certain seuil durant la durée d’un service.
+Ce seuil de convives maximum pourra être précisé dans le panel d’administration.
+Seul un utilisateur connecté pourra faire une réservation. Si au moment de valider la
+réservation l’utilisateur n’est pas connecté, il faudra alors lui proposer de s’inscrire ou
+de se connecter.
+
+Gérer les réservations
+Utilisateurs concernés: Administrateur
+L’administrateur doit pouvoir voir toutes les réservations, en filtrant par jour. Il doit
+pouvoir supprimer ou modifier une réservation.
+
+Gérer ses réservations
+Utilisateurs concernés: Client
+
+Le client doit pouvoir voir toutes ses réservations. Il doit pouvoir supprimer ou modifier
+une réservation s’il le souhaite.
+
+Modifier ses données personnelles
+Utilisateurs concernés: Client
+Le client doit pouvoir modifier ses données personnelles, et supprimer son compte s’il
+le souhaite.
+
+

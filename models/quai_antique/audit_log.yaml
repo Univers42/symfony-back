@@ -1,0 +1,19 @@
+name: AuditLog
+table: audit_logs
+store: mongo
+description: |
+  Append-only mutation log. Written by an event subscriber (not yet wired)
+  whenever a postgres entity is created/updated/deleted.
+
+fields:
+  - { name: id, type: id }
+  - { name: actorEmail, type: string, length: 180, nullable: true }
+  - { name: action, type: string, length: 20 }
+  - { name: entity, type: string, length: 80 }
+  - { name: entityId, type: string, length: 80 }
+  - { name: payload, type: json, nullable: true }
+  - { name: occurredAt, type: datetime_immutable, default: now }
+
+indexes:
+  - { name: idx_audit_occurred_at, fields: { occurredAt: -1 } }
+  - { name: idx_audit_entity, fields: { entity: 1, entityId: 1 } }

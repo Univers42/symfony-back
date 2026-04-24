@@ -1,0 +1,20 @@
+name: ServiceHour
+table: service_hours
+store: postgres
+description: |
+  Per-weekday service window (lunch or dinner). The CDC fixes Tue->Sun
+  opening; weekday is stored as ISO 1..7 (1=Mon, 7=Sun).
+
+fields:
+  - { name: id, type: id }
+  - { name: weekday, type: smallint, assert: ['Range(min: 1, max: 7)'] }
+  - { name: serviceLabel, type: string, length: 20 }
+  - { name: opensAt, type: time }
+  - { name: closesAt, type: time }
+  - { name: maxGuests, type: int, default: 40 }
+
+relations:
+  - { name: restaurant, type: many_to_one, target: Restaurant, nullable: false, on_delete: CASCADE }
+
+indexes:
+  - { name: idx_service_weekday, columns: [weekday, service_label] }

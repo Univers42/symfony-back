@@ -1,0 +1,23 @@
+name: GalleryImage
+table: gallery_images
+store: mongo
+description: |
+  Restaurant gallery; mongo-backed because images are append-heavy and
+  decoupled from the relational core.
+
+fields:
+  - { name: id, type: id }
+  - { name: title, type: string, length: 160, assert: [NotBlank] }
+  - { name: filename, type: string, length: 200, assert: [NotBlank] }
+  - { name: alt, type: string, length: 200, nullable: true }
+  - { name: position, type: int, default: 0 }
+  - { name: createdAt, type: datetime_immutable, default: now }
+
+indexes:
+  - { name: idx_gallery_position, fields: { position: 1 } }
+
+seeds:
+  fixed:
+    - { title: "Tarte aux myrtilles", filename: "tarte-myrtilles.jpg", alt: "Tarte aux myrtilles de Savoie", position: 1 }
+    - { title: "Truite du lac", filename: "truite-lac.jpg", alt: "Truite du lac du Bourget", position: 2 }
+    - { title: "Fondue Savoyarde", filename: "fondue.jpg", alt: "Fondue savoyarde traditionnelle", position: 3 }

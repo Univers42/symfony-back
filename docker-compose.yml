@@ -1,0 +1,195 @@
+# =============================================================================
+#  PHP BaaS Stack — Apache · PHP-FPM · PostgreSQL · MongoDB · Composer · Symfony
+# =============================================================================
+name: backend_symfony
+
+x-restart-policy: &restart_policy
+  restart: unless-stopped
+
+x-app-build-args: &app_build_args
+  APP_UID: ${APP_UID:-1000}
+  APP_GID: ${APP_GID:-1000}
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 16 — primary relational datastore
+  # ---------------------------------------------------------------------------
+  postgres:
+    <<: *restart_policy
+    build:
+      context: ./docker/requirements/postgres
+      dockerfile: Dockerfile
+    container_name: backend_postgres
+    environment:
+      POSTGRES_DB:           ${POSTGRES_DB:-baas}
+      POSTGRES_USER:         ${POSTGRES_USER:-baas}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    expose:
+      - "5432"
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
+
+  # ---------------------------------------------------------------------------
+  # MongoDB 7 — document datastore
+  # ---------------------------------------------------------------------------
+  mongo:
+    <<: *restart_policy
+    build:
+      context: ./docker/requirements/mongo
+      dockerfile: Dockerfile
+    container_name: backend_mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME:      ${MONGO_ROOT_USER:-root}
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_root_password
+      MONGO_INITDB_DATABASE:           ${MONGO_DB:-baas}
+      MONGO_APP_DB:                    ${MONGO_DB:-baas}
+      MONGO_APP_USER:                  ${MONGO_APP_USER:-baas}
+      MONGO_APP_PASSWORD:              ${MONGO_APP_PASSWORD:-baas_app_pwd}
+    secrets:
+      - mongo_root_password
+      - mongo_app_password
+    volumes:
+      - mongo_data:/data/db
+      - ./docker/requirements/mongo/initdb:/docker-entrypoint-initdb.d:ro
+    networks:
+      - backend
+    expose:
+      - "27017"
+    ports:
+      - "127.0.0.1:${MONGO_HOST_PORT:-27017}:27017"
+
+  # ---------------------------------------------------------------------------
+  # PHP-FPM 8.3 — runs the Symfony BaaS application
+  # ---------------------------------------------------------------------------
+  php:
+    <<: *restart_policy
+    build:
+      context: ./docker/requirements/php
+      dockerfile: Dockerfile
+      args: *app_build_args
+    container_name: backend_php
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    environment:
+      APP_ENV:      ${APP_ENV:-dev}
+      APP_SECRET:   ${APP_SECRET}
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-baas}:${POSTGRES_PASSWORD:-baas_app_pwd}@postgres:5432/${POSTGRES_DB:-baas}?serverVersion=16&charset=utf8"
+      MONGODB_URL:  "mongodb://${MONGO_APP_USER:-baas}:${MONGO_APP_PASSWORD:-baas_app_pwd}@mongo:27017/${MONGO_DB:-baas}?authSource=${MONGO_DB:-baas}"
+      MONGODB_DB:   ${MONGO_DB:-baas}
+      JWT_PASSPHRASE: ${JWT_PASSPHRASE:-jwt_passphrase}
+      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-^https?://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?$$}
+    volumes:
+      - ./app:/var/www/html:delegated
+      - ./models:/var/www/html/models:ro
+      - composer_cache:/tmp/composer/cache
+      - app_var_cache:/var/www/html/var/cache
+      - app_var_log:/var/www/html/var/log
+    networks:
+      - backend
+    expose:
+      - "9000"
+
+  # ---------------------------------------------------------------------------
+  # Apache 2.4 — public HTTP entry point, proxies PHP to php-fpm
+  # ---------------------------------------------------------------------------
+  apache:
+    <<: *restart_policy
+    build:
+      context: ./docker/requirements/apache2
+      dockerfile: Dockerfile
+    container_name: backend_apache
+    depends_on:
+      - php
+    volumes:
+      - ./app:/var/www/html:ro
+    networks:
+      - backend
+    ports:
+      - "${HTTP_HOST_PORT:-8080}:80"
+
+  # ---------------------------------------------------------------------------
+  # Composer — utility container, run on demand
+  # ---------------------------------------------------------------------------
+  composer:
+    profiles: ["tools"]
+    build:
+      context: ./docker/requirements/composer
+      dockerfile: Dockerfile
+    container_name: backend_composer
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
+    volumes:
+      - ./app:/var/www/html
+      - composer_cache:/tmp/composer/cache
+    networks:
+      - backend
+    working_dir: /var/www/html
+
+  # ---------------------------------------------------------------------------
+  # Symfony CLI — utility container for project bootstrap & maintenance
+  # ---------------------------------------------------------------------------
+  symfony:
+    profiles: ["tools"]
+    build:
+      context: ./docker/requirements/symfony
+      dockerfile: Dockerfile
+    container_name: backend_symfony_cli
+    volumes:
+      - ./app:/var/www/html
+      - composer_cache:/tmp/composer/cache
+    networks:
+      - backend
+    working_dir: /var/www/html
+
+  # ---------------------------------------------------------------------------
+  # Mongo Express — web UI for MongoDB (dev only)
+  # ---------------------------------------------------------------------------
+  mongo-express:
+    profiles: ["dev-tools"]
+    image: mongo-express:1
+    container_name: backend_mongo_express
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USER:-root}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD:-change_this_root_password}
+      ME_CONFIG_MONGODB_SERVER:        mongo
+      ME_CONFIG_BASICAUTH:             "false"
+    networks:
+      - backend
+    ports:
+      - "127.0.0.1:${MONGO_EXPRESS_PORT:-8081}:8081"
+
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  mongo_data:
+    driver: local
+  composer_cache:
+    driver: local
+  app_var_cache:
+    driver: local
+  app_var_log:
+    driver: local
+
+networks:
+  backend:
+    driver: bridge
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  mongo_root_password:
+    file: ./secrets/mongo_root_password.txt
+  mongo_app_password:
+    file: ./secrets/mongo_app_password.txt
