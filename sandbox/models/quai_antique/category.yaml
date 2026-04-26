@@ -1,0 +1,17 @@
+name: Category
+table: categories
+store: postgres
+
+fields:
+  - { name: id, type: id }
+  - { name: title, type: string, length: 80, unique: true, assert: [NotBlank] }
+  - { name: position, type: smallint, default: 0 }
+
+api:
+  operations: [GetCollection, Get, Post, Patch, Delete]
+
+seeds:
+  fixed:
+    - { id: 1, title: Entrées, position: 1 }
+    - { id: 2, title: Plats, position: 2 }
+    - { id: 3, title: Desserts, position: 3 }

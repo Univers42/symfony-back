@@ -17,7 +17,7 @@ services:
   postgres:
     <<: *restart_policy
     build:
-      context: ./docker/requirements/postgres
+      context: ./infrastructure/requirements/postgres
       dockerfile: Dockerfile
     container_name: backend_postgres
     environment:
@@ -41,7 +41,7 @@ services:
   mongo:
     <<: *restart_policy
     build:
-      context: ./docker/requirements/mongo
+      context: ./infrastructure/requirements/mongo
       dockerfile: Dockerfile
     container_name: backend_mongo
     environment:
@@ -56,7 +56,7 @@ services:
       - mongo_app_password
     volumes:
       - mongo_data:/data/db
-      - ./docker/requirements/mongo/initdb:/docker-entrypoint-initdb.d:ro
+      - ./infrastructure/requirements/mongo/initdb:/docker-entrypoint-initdb.d:ro
     networks:
       - backend
     expose:
@@ -78,7 +78,7 @@ services:
   php:
     <<: *restart_policy
     build:
-      context: ./docker/requirements/php
+      context: ./infrastructure/requirements/php
       dockerfile: Dockerfile
       args: *app_build_args
     container_name: backend_php
@@ -89,7 +89,7 @@ services:
         condition: service_healthy
     environment:
       APP_ENV:      ${APP_ENV:-dev}
-      APP_SECRET:   ${APP_SECRET}
+      APP_SECRET:   ${APP_SECRET:-change-me-to-a-random-32-char-string}
       DATABASE_URL: "postgresql://${POSTGRES_USER:-baas}:${POSTGRES_PASSWORD:-baas_app_pwd}@postgres:5432/${POSTGRES_DB:-baas}?serverVersion=16&charset=utf8"
       MONGODB_URL:  "mongodb://${MONGO_APP_USER:-baas}:${MONGO_APP_PASSWORD:-baas_app_pwd}@mongo:27017/${MONGO_DB:-baas}?authSource=${MONGO_DB:-baas}"
       MONGODB_DB:   ${MONGO_DB:-baas}
@@ -97,7 +97,7 @@ services:
       CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-^https?://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?$$}
     volumes:
       - ./app:/var/www/html:delegated
-      - ./models:/var/www/html/models:ro
+      - ./sandbox/models:/var/www/html/models:ro
       - composer_cache:/tmp/composer/cache
       - app_var_cache:/var/www/html/var/cache
       - app_var_log:/var/www/html/var/log
@@ -112,11 +112,13 @@ services:
   apache:
     <<: *restart_policy
     build:
-      context: ./docker/requirements/apache2
+      context: ./infrastructure/requirements/apache2
       dockerfile: Dockerfile
     container_name: backend_apache
     depends_on:
       - php
+    environment:
+      PHP_FPM_HOST: php
     volumes:
       - ./app:/var/www/html:ro
     networks:
@@ -125,12 +127,56 @@ services:
       - "${HTTP_HOST_PORT:-8080}:80"
 
   # ---------------------------------------------------------------------------
+  # Sandbox frontend — separate Symfony app consuming the BaaS API only
+  # ---------------------------------------------------------------------------
+  sandbox-php:
+    <<: *restart_policy
+    build:
+      context: ./infrastructure/requirements/php
+      dockerfile: Dockerfile
+      args: *app_build_args
+    container_name: sandbox_php
+    depends_on:
+      - apache
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      APP_SECRET: ${SANDBOX_APP_SECRET:-sandbox-change-me}
+      BAAS_API_BASE: ${BAAS_API_BASE:-http://apache}
+    volumes:
+      - ./sandbox/frontend:/var/www/html:delegated
+      - ./sandbox/models:/var/www/html/models:ro
+      - composer_cache:/tmp/composer/cache
+      - sandbox_var_cache:/var/www/html/var/cache
+      - sandbox_var_log:/var/www/html/var/log
+    networks:
+      - backend
+    expose:
+      - "9000"
+
+  sandbox-apache:
+    <<: *restart_policy
+    build:
+      context: ./infrastructure/requirements/apache2
+      dockerfile: Dockerfile
+    container_name: sandbox_apache
+    depends_on:
+      - sandbox-php
+    environment:
+      PHP_FPM_HOST: sandbox-php
+    volumes:
+      - ./sandbox/frontend:/var/www/html:ro
+    networks:
+      - backend
+    ports:
+      - "${SANDBOX_HTTP_HOST_PORT:-8082}:80"
+
+  # ---------------------------------------------------------------------------
   # Composer — utility container, run on demand
   # ---------------------------------------------------------------------------
   composer:
     profiles: ["tools"]
     build:
-      context: ./docker/requirements/composer
+      context: ./infrastructure/requirements/composer
       dockerfile: Dockerfile
     container_name: backend_composer
     user: "${APP_UID:-1000}:${APP_GID:-1000}"
@@ -147,7 +193,7 @@ services:
   symfony:
     profiles: ["tools"]
     build:
-      context: ./docker/requirements/symfony
+      context: ./infrastructure/requirements/symfony
       dockerfile: Dockerfile
     container_name: backend_symfony_cli
     volumes:
@@ -188,6 +234,10 @@ volumes:
   app_var_cache:
     driver: local
   app_var_log:
+    driver: local
+  sandbox_var_cache:
+    driver: local
+  sandbox_var_log:
     driver: local
 
 networks:

@@ -4,13 +4,6 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Delete;
-use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Patch;
-use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Put;
 use App\Repository\DishRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -24,18 +17,6 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 #[ORM\Entity(repositoryClass: DishRepository::class)]
 #[ORM\Table(name: 'dishes')]
-#[ApiResource(
-    operations: [
-        new GetCollection,
-        new Get,
-        new Post,
-        new Patch,
-        new Delete,
-    ],
-    normalizationContext: ['groups' => ['dish:read']],
-    denormalizationContext: ['groups' => ['dish:write']],
-    paginationItemsPerPage: 30,
-)]
 class Dish
 {
     #[ORM\Id]

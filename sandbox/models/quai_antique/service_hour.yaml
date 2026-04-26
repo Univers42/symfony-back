@@ -1,0 +1,35 @@
+name: ServiceHour
+table: service_hours
+store: postgres
+description: |
+  Per-weekday service window (lunch or dinner). The CDC fixes Tue->Sun
+  opening; weekday is stored as ISO 1..7 (1=Mon, 7=Sun).
+
+fields:
+  - { name: id, type: id }
+  - { name: weekday, type: smallint, assert: ['Range(min: 1, max: 7)'] }
+  - { name: serviceLabel, type: string, length: 20 }
+  - { name: opensAt, type: time }
+  - { name: closesAt, type: time }
+  - { name: maxGuests, type: int, default: 40 }
+
+relations:
+  - { name: restaurant, type: many_to_one, target: Restaurant, nullable: false, on_delete: CASCADE }
+
+indexes:
+  - { name: idx_service_weekday, columns: [weekday, service_label] }
+
+seeds:
+  fixed:
+    - { id: 1, restaurantId: 1, weekday: 2, serviceLabel: lunch, opensAt: '12:00', closesAt: '14:00', maxGuests: 40 }
+    - { id: 2, restaurantId: 1, weekday: 2, serviceLabel: dinner, opensAt: '19:00', closesAt: '22:00', maxGuests: 40 }
+    - { id: 3, restaurantId: 1, weekday: 3, serviceLabel: lunch, opensAt: '12:00', closesAt: '14:00', maxGuests: 40 }
+    - { id: 4, restaurantId: 1, weekday: 3, serviceLabel: dinner, opensAt: '19:00', closesAt: '22:00', maxGuests: 40 }
+    - { id: 5, restaurantId: 1, weekday: 4, serviceLabel: lunch, opensAt: '12:00', closesAt: '14:00', maxGuests: 40 }
+    - { id: 6, restaurantId: 1, weekday: 4, serviceLabel: dinner, opensAt: '19:00', closesAt: '22:00', maxGuests: 40 }
+    - { id: 7, restaurantId: 1, weekday: 5, serviceLabel: lunch, opensAt: '12:00', closesAt: '14:00', maxGuests: 40 }
+    - { id: 8, restaurantId: 1, weekday: 5, serviceLabel: dinner, opensAt: '19:00', closesAt: '22:00', maxGuests: 40 }
+    - { id: 9, restaurantId: 1, weekday: 6, serviceLabel: lunch, opensAt: '12:00', closesAt: '14:00', maxGuests: 40 }
+    - { id: 10, restaurantId: 1, weekday: 6, serviceLabel: dinner, opensAt: '19:00', closesAt: '22:00', maxGuests: 40 }
+    - { id: 11, restaurantId: 1, weekday: 7, serviceLabel: lunch, opensAt: '12:00', closesAt: '14:00', maxGuests: 40 }
+    - { id: 12, restaurantId: 1, weekday: 7, serviceLabel: dinner, opensAt: '19:00', closesAt: '22:00', maxGuests: 40 }

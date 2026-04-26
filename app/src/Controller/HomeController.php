@@ -12,7 +12,7 @@ final class HomeController extends AbstractController
     public function index(): Response
     {
         return $this->render('home/index.html.twig', [
-            'title'   => 'Symfony Backend',
+            'title'   => 'Generic Symfony BaaS',
             'php'     => PHP_VERSION,
             'symfony' => \Symfony\Component\HttpKernel\Kernel::VERSION,
         ]);

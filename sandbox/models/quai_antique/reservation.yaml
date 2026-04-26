@@ -1,0 +1,28 @@
+name: Reservation
+table: reservations
+store: postgres
+description: |
+  Booked table slot. The reservation availability endpoint enforces the
+  per-service capacity defined on ServiceHour.maxGuests / Restaurant.capacity.
+
+fields:
+  - { name: id, type: id }
+  - { name: guests, type: smallint, assert: ['Range(min: 1, max: 50)'] }
+  - { name: reservedAt, type: datetime_immutable }
+  - { name: allergies, type: text, nullable: true }
+  - { name: status, type: string, length: 20, default: confirmed }
+  - { name: createdAt, type: datetime_immutable, default: now }
+
+relations:
+  - { name: restaurant, type: many_to_one, target: Restaurant, nullable: false }
+
+indexes:
+  - { name: idx_reservation_reserved_at, columns: [reserved_at] }
+
+api:
+  operations: [GetCollection, Get, Post, Patch, Delete]
+
+seeds:
+  fixed:
+    - { id: 1, restaurantId: 1, guests: 2, reservedAt: 'next tuesday 12:30', allergies: aucune, status: confirmed }
+    - { id: 2, restaurantId: 1, guests: 4, reservedAt: 'next wednesday 12:30', allergies: arachides, status: confirmed }

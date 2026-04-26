@@ -4,12 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
-use App\Controller\Admin\CategoryCrudController;
-use App\Controller\Admin\DishCrudController;
-use App\Controller\Admin\MenuCrudController;
-use App\Controller\Admin\ReservationCrudController;
-use App\Controller\Admin\RestaurantCrudController;
-use App\Controller\Admin\ServiceHourCrudController;
 use App\Controller\Admin\UserCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
@@ -29,32 +23,26 @@ class DashboardController extends AbstractDashboardController
 
     public function index(): Response
     {
-        $url = $this->adminUrlGenerator->setController(RestaurantCrudController::class)->generateUrl();
+        $url = $this->adminUrlGenerator->setController(UserCrudController::class)->generateUrl();
 
         return $this->redirect($url);
     }
 
     public function configureDashboard(): Dashboard
     {
-        return Dashboard::new()->setTitle('Quai Antique — Admin');
+        return Dashboard::new()->setTitle('Symfony BaaS — Admin');
     }
 
     public function configureMenuItems(): iterable
     {
         yield MenuItem::linkToDashboard('Dashboard', 'fa fa-home');
-        yield MenuItem::section('Restaurant');
-        yield MenuItem::linkTo(RestaurantCrudController::class, 'Restaurants', 'fa fa-store');
-        yield MenuItem::linkTo(ServiceHourCrudController::class, 'Service Hours', 'fa fa-clock');
-        yield MenuItem::section('Menu');
-        yield MenuItem::linkTo(CategoryCrudController::class, 'Categories', 'fa fa-tags');
-        yield MenuItem::linkTo(DishCrudController::class, 'Dishes', 'fa fa-utensils');
-        yield MenuItem::linkTo(MenuCrudController::class, 'Menus', 'fa fa-book');
-        yield MenuItem::section('Réservations');
-        yield MenuItem::linkTo(ReservationCrudController::class, 'Reservations', 'fa fa-calendar');
-        yield MenuItem::section('Utilisateurs');
+        yield MenuItem::section('BaaS');
+        yield MenuItem::linkToUrl('API resources', 'fa fa-database', '/api/baas/resources');
+        yield MenuItem::linkToUrl('Schema overview', 'fa fa-table', '/api/baas/schema');
+        yield MenuItem::section('Users');
         yield MenuItem::linkTo(UserCrudController::class, 'Users', 'fa fa-user');
         yield MenuItem::section();
-        yield MenuItem::linkToUrl('Site public', 'fa fa-arrow-left', '/');
+        yield MenuItem::linkToUrl('BaaS home', 'fa fa-arrow-left', '/');
         yield MenuItem::linkToLogout('Déconnexion', 'fa fa-sign-out-alt');
     }
 }

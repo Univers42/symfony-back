@@ -12,6 +12,11 @@ app/node_modules/
 app/.env.local
 app/public/bundles/
 app/config/jwt/*.pem
+sandbox/frontend/var/
+sandbox/frontend/vendor/
+sandbox/frontend/node_modules/
+sandbox/frontend/.env.local
+sandbox/frontend/public/assets/
 
 # OS / editor
 .DS_Store

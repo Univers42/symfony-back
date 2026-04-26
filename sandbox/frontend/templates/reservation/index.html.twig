@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Réservation — Le Quai Antique{% endblock %}
+
+{% block body %}
+<header class="hero compact">
+    <nav class="nav">
+        <a href="{{ path('sandbox_home') }}">← Accueil</a>
+        <strong>Réservation</strong>
+    </nav>
+    <h1>Choisissez votre créneau</h1>
+    <p>Les disponibilités sont calculées depuis les données exposées par le BaaS.</p>
+</header>
+
+<main class="shell reservation-shell">
+    <form class="panel reservation-form"
+          data-controller="reservation"
+          data-reservation-endpoint-value="{{ path('sandbox_reservation_availability') }}">
+        <label>
+            Date
+            <input type="date" data-reservation-target="date" data-action="change->reservation#fetch">
+        </label>
+        <label>
+            Couverts
+            <input type="number" min="1" max="50" value="2" data-reservation-target="guests" data-action="input->reservation#fetch">
+        </label>
+        <label>
+            Service
+            <select data-reservation-target="service" data-action="change->reservation#fetch">
+                <option value="">Tous</option>
+                <option value="lunch">Déjeuner</option>
+                <option value="dinner">Dîner</option>
+            </select>
+        </label>
+        <p data-reservation-target="message" class="message"></p>
+        <div data-reservation-target="slots" class="slots"></div>
+    </form>
+</main>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Le Quai Antique — Sandbox frontend{% endblock %}
+
+{% block body %}
+<header class="hero">
+    <nav class="nav">
+        <strong>Le Quai Antique</strong>
+        <a href="{{ path('sandbox_reservation') }}">Réserver</a>
+    </nav>
+    <div>
+        <p class="eyebrow">Sandbox app · powered by Symfony BaaS</p>
+        <h1>{{ restaurant.name|default('Le Quai Antique') }}</h1>
+        <p>{{ restaurant.address|default('Cuisine savoyarde gastronomique') }} {{ restaurant.city|default('Chambéry') }}</p>
+    </div>
+</header>
+
+<main class="shell">
+    <section class="panel">
+        <h2>Menus</h2>
+        <div class="grid">
+            {% for menu in menus %}
+                <article class="card">
+                    <h3>{{ menu.title|default(menu.name|default('Menu')) }}</h3>
+                    <p>{{ menu.description|default('Sélection du chef') }}</p>
+                    {% if menu.priceCents is defined %}<strong>{{ (menu.priceCents / 100)|number_format(2, ',', ' ') }} €</strong>{% endif %}
+                </article>
+            {% else %}
+                <p>Aucun menu publié.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>La carte</h2>
+        <div class="grid dishes">
+            {% for dish in dishes %}
+                <article class="card">
+                    <h3>{{ dish.title }}</h3>
+                    <p>{{ dish.description|default('') }}</p>
+                    <strong>{{ (dish.priceCents / 100)|number_format(2, ',', ' ') }} €</strong>
+                </article>
+            {% else %}
+                <p>Aucun plat disponible.</p>
+            {% endfor %}
+        </div>
+    </section>
+</main>
+{% endblock %}

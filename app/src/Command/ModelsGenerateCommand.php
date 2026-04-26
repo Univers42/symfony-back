@@ -6,7 +6,6 @@ namespace App\Command;
 
 use App\Baas\Generator\DocumentGenerator;
 use App\Baas\Generator\EntityGenerator;
-use App\Baas\Generator\FixturesGenerator;
 use App\Baas\Generator\GeneratedFileWriter;
 use App\Baas\Generator\MongoRegistryGenerator;
 use App\Baas\Loader\ModelLoader;
@@ -26,7 +25,6 @@ final class ModelsGenerateCommand extends Command
         private readonly ModelValidator $validator,
         private readonly EntityGenerator $entityGen,
         private readonly DocumentGenerator $documentGen,
-        private readonly FixturesGenerator $fixturesGen,
         private readonly MongoRegistryGenerator $registryGen,
         private readonly GeneratedFileWriter $writer,
         private readonly string $projectDir,
@@ -66,12 +64,6 @@ final class ModelsGenerateCommand extends Command
                     'path'     => $this->projectDir . '/src/Repository/' . $m->name . 'Repository.php',
                     'contents' => $this->entityGen->generateRepository($m),
                 ];
-                if (!empty($m->seeds)) {
-                    $items[] = [
-                        'path'     => $this->projectDir . '/src/DataFixtures/Generated/' . $m->name . 'Fixtures.php',
-                        'contents' => $this->fixturesGen->generate($m),
-                    ];
-                }
             } elseif ($m->isMongo()) {
                 $items[] = [
                     'path'     => $this->projectDir . '/src/Document/' . $m->name . '.php',

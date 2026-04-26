@@ -4,13 +4,6 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Delete;
-use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Patch;
-use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Put;
 use App\Repository\ServiceHourRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -27,18 +20,6 @@ opening; weekday is stored as ISO 1..7 (1=Mon, 7=Sun).
 #[ORM\Entity(repositoryClass: ServiceHourRepository::class)]
 #[ORM\Table(name: 'service_hours')]
 #[ORM\Index(name: 'idx_service_weekday', columns: ['weekday', 'service_label'])]
-#[ApiResource(
-    operations: [
-        new GetCollection,
-        new Get,
-        new Post,
-        new Put,
-        new Delete,
-    ],
-    normalizationContext: ['groups' => ['service_hour:read']],
-    denormalizationContext: ['groups' => ['service_hour:write']],
-    paginationItemsPerPage: 30,
-)]
 class ServiceHour
 {
     #[ORM\Id]

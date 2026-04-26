@@ -4,13 +4,6 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Delete;
-use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Patch;
-use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Put;
 use App\Repository\RestaurantRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -26,17 +19,6 @@ Capacity feeds the reservation availability check.
  */
 #[ORM\Entity(repositoryClass: RestaurantRepository::class)]
 #[ORM\Table(name: 'restaurants')]
-#[ApiResource(
-    operations: [
-        new GetCollection,
-        new Get,
-        new Post,
-        new Patch,
-    ],
-    normalizationContext: ['groups' => ['restaurant:read']],
-    denormalizationContext: ['groups' => ['restaurant:write']],
-    paginationItemsPerPage: 10,
-)]
 class Restaurant
 {
     #[ORM\Id]

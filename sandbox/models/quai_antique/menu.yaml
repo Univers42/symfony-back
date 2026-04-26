@@ -1,0 +1,18 @@
+name: Menu
+table: menus
+store: postgres
+
+fields:
+  - { name: id, type: id }
+  - { name: title, type: string, length: 120, assert: [NotBlank] }
+  - { name: description, type: text, nullable: true }
+  - { name: priceCents, type: int, assert: [PositiveOrZero] }
+  - { name: createdAt, type: datetime_immutable, default: now }
+
+api:
+  operations: [GetCollection, Get, Post, Patch, Delete]
+
+seeds:
+  fixed:
+    - { id: 1, title: Menu du marché, description: 'Entrée + plat + dessert au choix selon arrivage.', priceCents: 3200 }
+    - { id: 2, title: Menu dégustation, description: '5 services, accord mets-vins inclus.', priceCents: 6500 }

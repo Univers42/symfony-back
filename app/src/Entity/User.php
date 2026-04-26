@@ -47,14 +47,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::STRING, length: 80, nullable: true)]
     private ?string $lastName = null;
 
-    /** Default number of guests for reservations (CDC: nombre de couverts par défaut). */
-    #[ORM\Column(type: Types::SMALLINT, options: ['default' => 2])]
-    #[Assert\Range(min: 1, max: 50)]
-    private int $defaultGuests = 2;
-
-    /** Free-text allergens; reused as default for new reservations. */
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    private ?string $allergies = null;
+    /** Application-neutral attributes used by ABAC policies. */
+    #[ORM\Column(type: Types::JSON)]
+    private array $attributes = [];
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
@@ -82,7 +77,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getUserIdentifier(): string
     {
-        return $this->email;
+        return strtolower($this->email);
     }
 
     /** @return list<string> */
@@ -145,25 +140,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getDefaultGuests(): int
+    /** @return array<string, mixed> */
+    public function getAttributes(): array
     {
-        return $this->defaultGuests;
+        return $this->attributes;
     }
 
-    public function setDefaultGuests(int $defaultGuests): self
+    /** @param array<string, mixed> $attributes */
+    public function setAttributes(array $attributes): self
     {
-        $this->defaultGuests = $defaultGuests;
-        return $this;
-    }
-
-    public function getAllergies(): ?string
-    {
-        return $this->allergies;
-    }
-
-    public function setAllergies(?string $allergies): self
-    {
-        $this->allergies = $allergies;
+        $this->attributes = $attributes;
         return $this;
     }
 
@@ -174,5 +160,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function eraseCredentials(): void
     {
+        // No transient sensitive data is stored on the entity.
     }
 }

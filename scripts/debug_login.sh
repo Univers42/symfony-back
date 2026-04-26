@@ -1,6 +1,6 @@
 #!/bin/sh
 curl -s -i -X POST -H "Content-Type: application/json" \
-  -d '{"email":"admin@quai-antique.test","password":"admin1234"}' \
+  -d '{"email":"admin@baas.test","password":"admin1234"}' \
   http://apache/api/login
 echo
 echo "---"

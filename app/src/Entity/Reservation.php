@@ -4,13 +4,6 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Delete;
-use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Patch;
-use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Put;
 use App\Repository\ReservationRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -27,18 +20,6 @@ per-service capacity defined on ServiceHour.maxGuests / Restaurant.capacity.
 #[ORM\Entity(repositoryClass: ReservationRepository::class)]
 #[ORM\Table(name: 'reservations')]
 #[ORM\Index(name: 'idx_reservation_reserved_at', columns: ['reserved_at'])]
-#[ApiResource(
-    operations: [
-        new GetCollection,
-        new Get,
-        new Post,
-        new Patch,
-        new Delete,
-    ],
-    normalizationContext: ['groups' => ['reservation:read']],
-    denormalizationContext: ['groups' => ['reservation:write']],
-    paginationItemsPerPage: 30,
-)]
 class Reservation
 {
     #[ORM\Id]

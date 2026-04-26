@@ -12,7 +12,7 @@ $CURL -o /dev/null -w "  HTTP %{http_code}\n" -H "Accept: text/html" http://apac
 
 echo "==> POST /api/login (admin)"
 TOKEN=$($CURL -X POST -H "Content-Type: application/json" \
-  -d '{"email":"admin@quai-antique.test","password":"admin1234"}' \
+  -d '{"email":"admin@baas.test","password":"admin1234"}' \
   http://apache/api/login | php -r 'echo json_decode(file_get_contents("php://stdin"), true)["token"] ?? "";')
 if [ -z "$TOKEN" ]; then echo "  FAIL: no token"; exit 1; fi
 echo "  token len: ${#TOKEN}"
@@ -21,12 +21,12 @@ echo "==> GET /api/me"
 $CURL -H "Authorization: Bearer $TOKEN" http://apache/api/me
 echo
 
-echo "==> GET /api/restaurants (anonymous OK)"
-$CURL -H "Accept: application/json" http://apache/api/restaurants | head -c 400
+echo "==> GET /api/baas/restaurants (anonymous OK)"
+$CURL -H "Accept: application/json" http://apache/api/baas/restaurants | head -c 400
 echo
 
-echo "==> GET /api/dishes"
-$CURL -H "Accept: application/json" -H "Authorization: Bearer $TOKEN" http://apache/api/dishes | head -c 400
+echo "==> GET /api/baas/dishes"
+$CURL -H "Accept: application/json" -H "Authorization: Bearer $TOKEN" http://apache/api/baas/dishes | head -c 400
 echo
 
 echo "==> GET /api/mongo/gallery_images"

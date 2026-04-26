@@ -51,6 +51,10 @@ security:
         - { path: ^/api/register,    roles: PUBLIC_ACCESS }
         - { path: ^/login,           roles: PUBLIC_ACCESS }
         - { path: ^/register,        roles: PUBLIC_ACCESS }
+        - { path: ^/api/baas/schema, methods: [GET],         roles: PUBLIC_ACCESS }
+        - { path: ^/api/baas/resources, methods: [GET],      roles: PUBLIC_ACCESS }
+        - { path: ^/api/baas/[^/]+$, methods: [GET],         roles: PUBLIC_ACCESS }
+        - { path: ^/api/baas/[^/]+/[0-9]+$, methods: [GET],  roles: PUBLIC_ACCESS }
         - { path: ^/api/mongo/gallery_images, methods: [GET], roles: PUBLIC_ACCESS }
         - { path: ^/api/restaurants, methods: [GET],         roles: PUBLIC_ACCESS }
         - { path: ^/api/menus,       methods: [GET],         roles: PUBLIC_ACCESS }

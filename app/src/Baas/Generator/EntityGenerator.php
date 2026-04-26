@@ -9,8 +9,9 @@ use App\Baas\Model\Model;
 use App\Baas\Model\Relation;
 
 /**
- * Emits a Doctrine ORM entity class for a Postgres-backed model, with
- * #[ApiResource] when api.enabled is true.
+ * Emits a Doctrine ORM entity class for a Postgres-backed model.
+ * Model-specific API Platform routes are opt-in with api.enabled: true; the
+ * default public API is the generic /api/baas runtime.
  *
  * The output file is marked "@generated baas-codegen" and will be safely
  * overwritten on subsequent runs. Files lacking that marker are NEVER
@@ -42,7 +43,6 @@ final class EntityGenerator
     public function generate(Model $model): string
     {
         $class    = $model->name;
-        $repoFqcn = "App\\Repository\\{$class}Repository";
 
         $uses = [
             "App\\Repository\\{$class}Repository",
@@ -53,7 +53,7 @@ final class EntityGenerator
         ];
 
         $api = $model->api;
-        if (($api['enabled'] ?? true) === true) {
+        if (($api['enabled'] ?? false) === true) {
             $uses[] = 'ApiPlatform\\Metadata\\ApiResource';
             $uses[] = 'ApiPlatform\\Metadata\\GetCollection';
             $uses[] = 'ApiPlatform\\Metadata\\Get';
@@ -181,7 +181,7 @@ PHP;
             }
 
             $props[] = $this->renderScalarProperty($model, $f, $ctorLines);
-            $methods[] = $this->renderScalarAccessors($model, $f);
+            $methods[] = $this->renderScalarAccessors($f);
         }
 
         foreach ($model->relations as $r) {
@@ -209,7 +209,7 @@ PHP;
     private function placeholderReadGroup(Field $f): string
     {
         // Default group; per-model override possible later via $f->groups.
-        return ($f->groups[0] ?? 'default:read');
+        return $f->groups[0] ?? 'default:read';
     }
 
     private function renderIdAccessor(Field $f): string
@@ -293,7 +293,7 @@ PHP;
 PHP;
     }
 
-    private function renderScalarAccessors(Model $model, Field $f): string
+    private function renderScalarAccessors(Field $f): string
     {
         $info = self::TYPE_MAP[$f->type] ?? self::TYPE_MAP['string'];
         $phpType = $info['php'];
@@ -428,7 +428,7 @@ PHP;
     private function buildApiResourceAttribute(Model $model): string
     {
         $api = $model->api;
-        if (($api['enabled'] ?? true) !== true) {
+        if (($api['enabled'] ?? false) !== true) {
             return '';
         }
 
