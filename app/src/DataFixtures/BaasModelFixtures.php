@@ -23,7 +23,10 @@ final class BaasModelFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         $models = array_values(array_filter($this->loader->loadAll(), fn (Model $model): bool => $model->isPostgres()));
-        foreach ($this->sortByRelations($models) as $model) {
+        $sorted = $this->sortByRelations($models);
+        $this->truncateDynamicTables($sorted);
+
+        foreach ($sorted as $model) {
             $fixed = $model->seeds['fixed'] ?? [];
             if (!\is_array($fixed) || $fixed === []) {
                 continue;
@@ -36,6 +39,14 @@ final class BaasModelFixtures extends Fixture
                 $this->connection->insert($model->table, $this->rowToColumns($model, $row));
             }
             $this->resetIdentity($model->table);
+        }
+    }
+
+    /** @param list<Model> $models */
+    private function truncateDynamicTables(array $models): void
+    {
+        foreach (array_reverse($models) as $model) {
+            $this->connection->executeStatement(sprintf('TRUNCATE TABLE %s RESTART IDENTITY CASCADE', $this->connection->quoteIdentifier($model->table)));
         }
     }
 

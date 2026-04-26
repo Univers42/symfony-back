@@ -1,10 +1,9 @@
 #!/bin/sh
 set -e
 cd /var/www/html
-rm -f src/Entity/Reservation.php src/Entity/ServiceHour.php
-php bin/console app:models:generate 2>&1 | tail -n 3
+php bin/console app:models:validate 2>&1 | tail -n 5
 echo "--- Lint errors (none = OK) ---"
-for f in src/Entity/*.php src/Document/*.php; do
+find src -name '*.php' | while IFS= read -r f; do
   out=$(php -l "$f" 2>&1 | grep -v "No syntax errors" || true)
   if [ -n "$out" ]; then
     echo "FAIL $f:"

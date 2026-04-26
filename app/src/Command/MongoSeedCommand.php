@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Baas\Generated\MongoResourceRegistry;
 use App\Baas\Loader\ModelLoader;
-use Doctrine\ODM\MongoDB\DocumentManager;
+use MongoDB\Client;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -23,7 +22,8 @@ final class MongoSeedCommand extends Command
 {
     public function __construct(
         private readonly ModelLoader $loader,
-        private readonly DocumentManager $dm,
+        private readonly Client $client,
+        private readonly string $mongoDatabase,
     ) {
         parent::__construct();
     }
@@ -32,7 +32,7 @@ final class MongoSeedCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $models = $this->loader->loadAll();
-        $registry = MongoResourceRegistry::all();
+        $database = $this->client->selectDatabase($this->mongoDatabase);
 
         $totalInserted = 0;
         foreach ($models as $model) {
@@ -45,38 +45,46 @@ final class MongoSeedCommand extends Command
                 continue;
             }
 
-            $class = $registry[$model->table] ?? null;
-            if ($class === null) {
-                $io->warning(\sprintf('No registry entry for "%s"; did you run app:models:generate?', $model->table));
-                continue;
+            // Wipe collection for deterministic re-seed.
+            $collection = $database->selectCollection($model->table);
+            $collection->deleteMany([]);
+
+            $documents = [];
+            foreach ($fixed as $row) {
+                if (!\is_array($row)) {
+                    continue;
+                }
+                $documents[] = $this->document($row);
+                $totalInserted++;
             }
 
-            // Wipe collection for deterministic re-seed.
-            $this->dm->getDocumentCollection($class)->deleteMany([]);
-
-            foreach ($fixed as $row) {
-                $doc = new $class();
-                foreach ($row as $field => $value) {
-                    $setter = 'set' . ucfirst((string) $field);
-                    if (!method_exists($doc, $setter)) {
-                        continue;
-                    }
-                    if (\is_string($value) && \str_starts_with($value, 'datetime:')) {
-                        $doc->$setter(new \DateTimeImmutable(substr($value, 9)));
-                        continue;
-                    }
-                    $doc->$setter($value);
-                }
-                $this->dm->persist($doc);
-                $totalInserted++;
+            if ($documents !== []) {
+                $collection->insertMany($documents);
             }
 
             $io->writeln(\sprintf('  - %s: seeded %d docs', $model->name, \count($fixed)));
         }
 
-        $this->dm->flush();
         $io->success(\sprintf('Inserted %d mongo documents.', $totalInserted));
 
         return Command::SUCCESS;
+    }
+
+    /** @param array<string,mixed> $row @return array<string,mixed> */
+    private function document(array $row): array
+    {
+        foreach ($row as $key => $value) {
+            if (\is_string($key) && \str_starts_with($key, '$')) {
+                throw new \InvalidArgumentException('Mongo operator keys are not allowed in seed data.');
+            }
+            if (\is_string($value) && \str_starts_with($value, 'datetime:')) {
+                $class = 'MongoDB\\BSON\\UTCDateTime';
+                $row[$key] = new $class(new \DateTimeImmutable(substr($value, 9)));
+            } elseif (\is_array($value)) {
+                $row[$key] = $this->document($value);
+            }
+        }
+
+        return $row;
     }
 }

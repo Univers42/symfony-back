@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Baas\Runtime\ModelRegistry;
+use App\Baas\Runtime\DynamicDataGateway;
 use App\Baas\Runtime\SchemaOperationGateway;
 use App\Baas\Security\BaasAccessDecision;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -18,7 +18,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class BaasSchemaController extends AbstractController
 {
     public function __construct(
-        private readonly ModelRegistry $models,
+        private readonly DynamicDataGateway $data,
         private readonly SchemaOperationGateway $schema,
         private readonly BaasAccessDecision $access,
     ) {
@@ -28,11 +28,7 @@ final class BaasSchemaController extends AbstractController
     public function index(): JsonResponse
     {
         return new JsonResponse([
-            'models' => array_map(fn ($model) => [
-                'name' => $model->name,
-                'resource' => $model->table,
-                'store' => $model->store,
-            ], $this->models->all()),
+            'resources' => $this->data->resources(),
             'tables' => $this->schema->tables(),
         ]);
     }

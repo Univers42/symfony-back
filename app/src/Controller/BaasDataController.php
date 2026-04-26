@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Baas\Runtime\DynamicDataGateway;
-use App\Baas\Runtime\ModelRegistry;
 use App\Baas\Security\BaasAccessDecision;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,7 +17,6 @@ use Symfony\Component\Routing\Attribute\Route;
 final class BaasDataController extends AbstractController
 {
     public function __construct(
-        private readonly ModelRegistry $models,
         private readonly DynamicDataGateway $gateway,
         private readonly BaasAccessDecision $access,
     ) {
@@ -28,47 +26,43 @@ final class BaasDataController extends AbstractController
     public function resources(): JsonResponse
     {
         return new JsonResponse([
-            'data' => array_map(fn ($model): array => $this->gateway->schema($model), $this->models->all()),
+            'data' => $this->gateway->resources(),
         ]);
     }
 
     #[Route('/api/baas/{resource}', name: 'api_baas_collection', methods: ['GET', 'POST'], priority: -20)]
     public function collection(string $resource, Request $request): Response
     {
-        $model = $this->models->postgresResource($resource);
-
         if ($request->isMethod('POST')) {
-            $this->access->denyUnlessAllowed($model, 'create');
+            $this->access->denyUnlessAllowed('create');
 
-            return new JsonResponse($this->gateway->create($model, $this->decode($request)), 201);
+            return new JsonResponse($this->gateway->create($resource, $this->decode($request)), 201);
         }
 
-        $this->access->denyUnlessAllowed($model, 'list');
+        $this->access->denyUnlessAllowed('list');
 
-        return new JsonResponse($this->gateway->list($model, $request->query->all()));
+        return new JsonResponse($this->gateway->list($resource, $request->query->all()));
     }
 
-    #[Route('/api/baas/{resource}/{id}', name: 'api_baas_item', methods: ['GET', 'PUT', 'PATCH', 'DELETE'], requirements: ['id' => '\\d+'], priority: -20)]
-    public function item(string $resource, int $id, Request $request): Response
+    #[Route('/api/baas/{resource}/{id}', name: 'api_baas_item', methods: ['GET', 'PUT', 'PATCH', 'DELETE'], requirements: ['id' => '[^/]+'], priority: -20)]
+    public function item(string $resource, string $id, Request $request): Response
     {
-        $model = $this->models->postgresResource($resource);
-
         if ($request->isMethod('GET')) {
-            $this->access->denyUnlessAllowed($model, 'read');
+            $this->access->denyUnlessAllowed('read');
 
-            return new JsonResponse($this->gateway->get($model, $id));
+            return new JsonResponse($this->gateway->get($resource, $id));
         }
 
         if ($request->isMethod('DELETE')) {
-            $this->access->denyUnlessAllowed($model, 'delete');
-            $this->gateway->delete($model, $id);
+            $this->access->denyUnlessAllowed('delete');
+            $this->gateway->delete($resource, $id);
 
             return new JsonResponse(null, 204);
         }
 
-        $this->access->denyUnlessAllowed($model, $request->isMethod('PATCH') ? 'patch' : 'update');
+        $this->access->denyUnlessAllowed($request->isMethod('PATCH') ? 'patch' : 'update');
 
-        return new JsonResponse($this->gateway->update($model, $id, $this->decode($request)));
+        return new JsonResponse($this->gateway->update($resource, $id, $this->decode($request)));
     }
 
     /** @return array<string,mixed> */

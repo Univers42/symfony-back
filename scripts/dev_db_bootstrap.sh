@@ -9,12 +9,11 @@ php bin/console cache:warmup --env=dev 2>&1 | tail -n 5
 echo "==> Postgres database create (if missing)"
 php bin/console doctrine:database:create --if-not-exists --no-interaction 2>&1 | tail -n 3
 
-echo "==> Doctrine migrations diff"
-rm -f migrations/Version*.php
-php bin/console doctrine:migrations:diff --no-interaction --allow-empty-diff 2>&1 | tail -n 5
+echo "==> Generic backend Doctrine schema update"
+php bin/console doctrine:schema:update --force --no-interaction 2>&1 | tail -n 10
 
-echo "==> Doctrine migrations migrate"
-php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration 2>&1 | tail -n 10
+echo "==> Dynamic PostgreSQL model schema sync"
+php bin/console app:models:schema:sync --no-interaction 2>&1 | tail -n 10
 
 echo "==> Mongo schema update"
 php bin/console app:mongo:schema:update --no-interaction 2>&1 | tail -n 5
